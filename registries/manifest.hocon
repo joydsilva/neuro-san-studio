@@ -204,4 +204,5 @@
     "agent_network_architect.hocon": false,
     "news_sentiment_analysis.hocon": false,
     "now_agents.hocon": true,
-}
+
+    "nationwide_excess_and_surplus_insurance.hocon": true,}
