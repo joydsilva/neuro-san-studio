@@ -28,18 +28,21 @@ SCOPE AND BEHAVIOR:
 """,
   
 "tools": [
-      
+        # Front-man agent - handles all client communication
+        {
+            "name": "insurance_quote_assistant",
+            "function": {
+                "description": "Generate insurance quotes for excess and surplus lines coverage"
+            },
+            "instructions": ${instructions_prefix},
+            "tools": ["mcp_quote_generator"]
+        },
         
-      
-        
+        # Coded tool that connects to MCP server
         {
             "name": "mcp_quote_generator",
-            "instructions": ${instructions_prefix},
             "function": {
-                "type": "coded_tool",
-                "module": "coded_tools.mcp_quote_generator",
-                "class": "McpQuoteGenerator",
-                "description": """Tool to generate insurance quotes for excess and surplus lines coverage, including policy terms, premiums, and coverage details""",
+                "description": "Tool to generate insurance quotes for excess and surplus lines coverage, including policy terms, premiums, and coverage details",
                 "parameters": {
                     "type": "object",
                     "required": ["business_type", "coverage_type", "coverage_limit", "location"],
@@ -70,10 +73,9 @@ SCOPE AND BEHAVIOR:
                         }
                     }
                 }
-            }
+            },
+            "instructions": "Generate a comprehensive insurance quote by invoking the MCP quote server with the provided parameters.",
+            "class": "mcp_quote_generator.McpQuoteGenerator"
         }
-        
-       
-       
 ]
 }
