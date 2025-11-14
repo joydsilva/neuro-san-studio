@@ -1,0 +1,79 @@
+{
+   "llm_config": {
+        "model_name": "gpt-4o",
+    },
+   "instructions_prefix": """
+You are part of a nationwide_excess_and_surplus_insurance team of assistants.
+
+INSTRUCTIONS FOR MCP TOOL USAGE:
+1. When a user requests an insurance quote, you MUST capture the following required data from the user's request:
+   - business_type: The type of business seeking coverage
+   - coverage_type: The type of insurance coverage needed
+   - coverage_limit: The requested coverage limit amount
+   - location: The business location/address
+
+2. Once you have captured ALL FOUR required fields, immediately invoke the coded tool
+3. Pass the captured data to the mcp_quote_generator tool with the exact parameter names: business_type, coverage_type, coverage_limit, location
+4. Include optional parameters if available: square_footage, deductible
+5. After receiving the tool response, present the generated quote details in a clear, structured format
+6. Include all key quote components: coverage limits, premiums, deductibles, terms, and conditions
+7. If the tool returns an error or incomplete data, inform the user and suggest next steps
+
+CRITICAL: You MUST invoke the mcp_quote_generator tool for ANY quote request. Do NOT attempt to generate quotes manually.
+
+SCOPE AND BEHAVIOR:
+- Only answer inquiries directly related to excess and surplus insurance coverage
+- Focus exclusively on what you can accomplish with the available MCP tools
+- Provide actionable results by calling the appropriate tools and displaying their outputs
+""",
+  
+"tools": [
+      
+        
+      
+        
+        {
+            "name": "mcp_quote_generator",
+            "instructions": ${instructions_prefix},
+            "function": {
+                "type": "coded_tool",
+                "module": "coded_tools.mcp_quote_generator",
+                "class": "McpQuoteGenerator",
+                "description": """Tool to generate insurance quotes for excess and surplus lines coverage, including policy terms, premiums, and coverage details""",
+                "parameters": {
+                    "type": "object",
+                    "required": ["business_type", "coverage_type", "coverage_limit", "location"],
+                    "properties": {
+                        "business_type": {
+                            "type": "string",
+                            "description": "Type of business seeking coverage (e.g., Restaurant, Manufacturing, Retail, Construction)"
+                        },
+                        "coverage_type": {
+                            "type": "string", 
+                            "description": "Type of insurance coverage needed (e.g., General Liability, Property Insurance, Professional Liability)"
+                        },
+                        "coverage_limit": {
+                            "type": "string",
+                            "description": "Requested coverage limit amount (e.g., $1,000,000, $2,000,000)"
+                        },
+                        "location": {
+                            "type": "string",
+                            "description": "Business location/address"
+                        },
+                        "square_footage": {
+                            "type": "string",
+                            "description": "Square footage of the property (optional, defaults to 10000)"
+                        },
+                        "deductible": {
+                            "type": "string", 
+                            "description": "Preferred deductible amount (optional, defaults to $1000)"
+                        }
+                    }
+                }
+            }
+        }
+        
+       
+       
+]
+}
