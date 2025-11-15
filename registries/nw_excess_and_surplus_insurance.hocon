@@ -25,6 +25,13 @@ SCOPE AND BEHAVIOR:
 - Only answer inquiries directly related to excess and surplus insurance coverage
 - Focus exclusively on what you can accomplish with the available MCP tools
 - Provide actionable results by calling the appropriate tools and displaying their outputs
+
+INSTRUCTIONS FOR INSURANCE INFO PROVIDER TOOL:
+1. When a user asks about available coverage types, business types, programs, or specialty lines, use the insurance_info_provider tool
+2. Provide a clear query describing what information the user is seeking
+3. The tool uses semantic search to find relevant information from the knowledge base
+4. Present the retrieved information in a clear, structured format
+5. If the user needs a quote after getting information, collect the required fields and invoke mcp_quote_generator
 """,
   
 "tools": [
@@ -32,10 +39,10 @@ SCOPE AND BEHAVIOR:
         {
             "name": "insurance_quote_assistant",
             "function": {
-                "description": "Generate insurance quotes for excess and surplus lines coverage"
+                "description": "Generate insurance quotes for excess and surplus lines coverage and provide information about available programs and coverages"
             },
             "instructions": ${instructions_prefix},
-            "tools": ["mcp_quote_generator"]
+            "tools": ["mcp_quote_generator", "insurance_info_provider"]
         },
         
         # Coded tool that connects to MCP server
@@ -76,6 +83,31 @@ SCOPE AND BEHAVIOR:
             },
             "instructions": "Generate a comprehensive insurance quote by invoking the MCP quote server with the provided parameters.",
             "class": "mcp_quote_generator.McpQuoteGenerator"
+        },
+
+        # Coded tool which uses RAG to provide available information about
+        # excess and surplus insurance lines, programs, and coverages
+        {
+            "name": "insurance_info_provider",
+            "function": {
+                "description": "Retrieve information about excess and surplus insurance lines, available programs, coverage types, and business types using semantic search with RAG",
+                "parameters": {
+                    "type": "object",
+                    "required": [],
+                    "properties": {
+                        "query": {
+                            "type": "string",
+                            "description": "Search query to find specific information about programs, coverages, specialty lines, or business types (e.g., 'What coverage types are available for restaurants?', 'commercial property programs')"
+                        },
+                        "section": {
+                            "type": "string",
+                            "description": "Optional section to focus on (e.g., 'programs', 'coverages', 'specialty_lines', 'business_types')"
+                        }
+                    }
+                }
+            },
+            "instructions": "Use this tool to retrieve detailed information about excess and surplus insurance from the knowledge base. The tool uses semantic search to find relevant information about available programs, coverage types, business types, and specialty lines.",
+            "class": "text_file_info_provider.TextFileInfoProvider"
         }
 ]
 }
