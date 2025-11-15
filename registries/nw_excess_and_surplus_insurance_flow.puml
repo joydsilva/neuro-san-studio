@@ -1,0 +1,82 @@
+@startuml Excess and Surplus Insurance Flow
+!theme plain
+skinparam backgroundColor #FEFEFE
+skinparam defaultFontSize 12
+skinparam arrowColor #2C3E50
+skinparam activityBorderColor #2C3E50
+skinparam activityBackgroundColor #ECF0F1
+
+title Excess and Surplus Insurance System Flow
+
+|User|
+start
+:Request insurance quote or information;
+
+|#AntiqueWhite|Insurance Quote Assistant|
+:Receive user request;
+
+if (Is this a quote request?) then (yes)
+  :Identify required fields:
+  - business_type
+  - coverage_type
+  - coverage_limit
+  - location;
+  
+  if (All required fields captured?) then (yes)
+    |#LightBlue|MCP Quote Generator Tool|
+    :Invoke MCP quote server;
+    :Parameters:
+    - business_type
+    - coverage_type
+    - coverage_limit
+    - location
+    - square_footage (optional)
+    - deductible (optional);
+    
+    :Generate comprehensive quote;
+    
+    |#AntiqueWhite|Insurance Quote Assistant|
+    :Present quote details:
+    - Coverage limits
+    - Premiums
+    - Deductibles
+    - Terms & conditions;
+  else (no)
+    :Request missing information
+    from user;
+    stop
+  endif
+
+else (no - information request)
+  if (Query about programs,\ncoverages, or business types?) then (yes)
+    |#LightGreen|Insurance Info Provider Tool|
+    :Invoke semantic search with RAG;
+    :Parameters:
+    - query
+    - section (optional);
+    
+    :Retrieve relevant information
+    from knowledge base;
+    
+    |#AntiqueWhite|Insurance Quote Assistant|
+    :Present retrieved information
+    in structured format;
+    
+    if (User needs a quote?) then (yes)
+      :Collect required fields;
+      |#LightBlue|MCP Quote Generator Tool|
+      :Generate quote;
+      |#AntiqueWhite|Insurance Quote Assistant|
+    else (no)
+    endif
+  else (no - out of scope)
+    :Inform user: Only excess and
+    surplus insurance queries supported;
+  endif
+endif
+
+|User|
+:Receive response;
+stop
+
+@enduml
