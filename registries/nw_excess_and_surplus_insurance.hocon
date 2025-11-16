@@ -1,51 +1,100 @@
 {
-   "llm_config": {
+    include "registries/aaosa.hocon"
+    
+    "llm_config": {
         "model_name": "gpt-4o",
     },
-   "instructions_prefix": """
-You are part of a nw_excess_and_surplus_insurance team of assistants.
+    
+    "instructions_prefix": """
+You are part of an excess and surplus insurance advisory team.
+Only answer inquiries that are directly within your area of expertise.
+Focus on providing accurate insurance information and quotes for excess and surplus lines.
+Do not mention what you can NOT do. Only mention what you can do.
+""",
 
-INSTRUCTIONS FOR MCP TOOL USAGE:
-1. When a user requests an insurance quote, you MUST capture the following required data from the user's request:
+    "tools": [
+        # Front-man agent - handles all client communication
+        # This is the top-level agent that interacts with users
+        {
+            "name": "Excess_And_Surplus_Insurance_Assistant",
+            "function": {
+                "description": """
+Your name is Excess And Surplus Insurance Assistant. You are in charge of helping customers with 
+excess and surplus lines insurance, providing quotes and information about available programs and coverages.
+                """
+            },
+            "instructions": ${instructions_prefix} """
+You are the top-level agent responsible for handling all excess and surplus insurance inquiries.
+When interacting with the user, act as the single point of interaction. No need to mention the other 
+tools or agents. If there are any requirements that need user input, ask them one at a time, 
+with clear examples of the choices available.
+
+Your responsibilities:
+- Understand customer insurance needs
+- Route inquiries to appropriate down-chain agents
+- Compile responses from down-chain agents into clear, actionable information
+- Ensure all required information is gathered before generating quotes
+            """ ${aaosa_instructions},
+            "tools": ["Quote_Generator_Agent", "Insurance_Information_Agent"]
+        },
+
+        # Agent responsible for quote generation
+        {
+            "name": "Quote_Generator_Agent",
+            "function": ${aaosa_call},
+            "instructions": ${instructions_prefix} """
+The name of this agent is Quote_Generator_Agent.
+You are responsible for generating insurance quotes for excess and surplus lines coverage.
+
+CRITICAL REQUIREMENTS:
+1. You MUST collect ALL of the following required fields before generating a quote:
    - business_type: The type of business seeking coverage
    - coverage_type: The type of insurance coverage needed
    - coverage_limit: The requested coverage limit amount
    - location: The business location/address
 
-2. Once you have captured ALL FOUR required fields, immediately invoke the coded tool
-3. Pass the captured data to the mcp_quote_generator tool with the exact parameter names: business_type, coverage_type, coverage_limit, location
-4. Include optional parameters if available: square_footage, deductible
-5. After receiving the tool response, present the generated quote details in a clear, structured format
-6. Include all key quote components: coverage limits, premiums, deductibles, terms, and conditions
-7. If the tool returns an error or incomplete data, inform the user and suggest next steps
+2. Optional fields you can also collect:
+   - square_footage: Square footage of the property (defaults to 10000)
+   - deductible: Preferred deductible amount (defaults to $1000)
 
-CRITICAL: You MUST invoke the mcp_quote_generator tool for ANY quote request. Do NOT attempt to generate quotes manually.
+3. Once you have ALL required fields, invoke the mcp_quote_generator tool
+4. Present the generated quote details in a clear, structured format including:
+   - Coverage limits
+   - Premiums
+   - Deductibles
+   - Terms and conditions
 
-SCOPE AND BEHAVIOR:
-- Only answer inquiries directly related to excess and surplus insurance coverage
-- Focus exclusively on what you can accomplish with the available MCP tools
-- Provide actionable results by calling the appropriate tools and displaying their outputs
-
-INSTRUCTIONS FOR INSURANCE INFO PROVIDER TOOL:
-1. When a user asks about available coverage types, business types, programs, or specialty lines, use the insurance_info_provider tool
-2. Provide a clear query describing what information the user is seeking
-3. The tool uses semantic search to find relevant information from the knowledge base
-4. Present the retrieved information in a clear, structured format
-5. If the user needs a quote after getting information, collect the required fields and invoke mcp_quote_generator
-""",
-  
-"tools": [
-        # Front-man agent - handles all client communication
-        {
-            "name": "insurance_quote_assistant",
-            "function": {
-                "description": "Generate insurance quotes for excess and surplus lines coverage and provide information about available programs and coverages"
-            },
-            "instructions": ${instructions_prefix},
-            "tools": ["mcp_quote_generator", "insurance_info_provider"]
+IMPORTANT: You MUST use the mcp_quote_generator tool for ANY quote request. 
+Do NOT attempt to generate quotes manually.
+            """ ${aaosa_instructions},
+            "command": ${aaosa_command},
+            "tools": ["mcp_quote_generator"]
         },
-        
-        # Coded tool that connects to MCP server
+
+        # Agent responsible for providing insurance information
+        {
+            "name": "Insurance_Information_Agent",
+            "function": ${aaosa_call},
+            "instructions": ${instructions_prefix} """
+The name of this agent is Insurance_Information_Agent.
+You are responsible for providing detailed information about excess and surplus insurance programs, 
+coverage types, business types, and specialty lines.
+
+Your responsibilities:
+1. Answer questions about available coverage types
+2. Provide information about different business types and their insurance needs
+3. Explain programs and specialty lines offered
+4. Help customers understand their insurance options
+
+Use the insurance_info_provider tool to retrieve relevant information from the knowledge base.
+Present the information in a clear, structured format.
+If the user needs a quote after getting information, route them back to the Quote_Generator_Agent.
+            """ ${aaosa_instructions},
+            "command": ${aaosa_command},
+            "tools": ["insurance_info_provider"]
+        },
+
+        # Coded tool that connects to MCP server for quote generation
         {
             "name": "mcp_quote_generator",
             "function": {
@@ -85,8 +134,7 @@ INSTRUCTIONS FOR INSURANCE INFO PROVIDER TOOL:
             "class": "mcp_quote_generator.McpQuoteGenerator"
         },
 
-        # Coded tool which uses RAG to provide available information about
-        # excess and surplus insurance lines, programs, and coverages
+        # Coded tool which uses RAG to provide information about insurance programs
         {
             "name": "insurance_info_provider",
             "function": {
@@ -109,5 +157,5 @@ INSTRUCTIONS FOR INSURANCE INFO PROVIDER TOOL:
             "instructions": "Use this tool to retrieve detailed information about excess and surplus insurance from the knowledge base. The tool uses semantic search to find relevant information about available programs, coverage types, business types, and specialty lines.",
             "class": "text_file_info_provider.TextFileInfoProvider"
         }
-]
+    ]
 }
