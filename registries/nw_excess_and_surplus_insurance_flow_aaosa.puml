@@ -1,0 +1,168 @@
+@startuml Excess and Surplus Insurance Flow (AAOSA)
+!theme plain
+skinparam backgroundColor #FEFEFE
+skinparam defaultFontSize 12
+skinparam activityBorderColor #2C3E50
+skinparam activityBackgroundColor #ECF0F1
+
+' Define custom colors for different interaction types
+!$USER_COLOR = "#0066CC"
+!$DETERMINE_COLOR = "#9932CC"
+!$FULFILL_COLOR = "#008000"
+!$FOLLOWUP_COLOR = "#FF6600"
+!$TOOL_COLOR = "#FFB000"
+!$RESPONSE_COLOR = "#000080"
+
+title Excess and Surplus Insurance System Flow (AAOSA Architecture)
+
+|User|
+start
+-[$USER_COLOR]->
+:Request insurance quote or information;
+
+-[$USER_COLOR]->
+|#AntiqueWhite|Excess_And_Surplus_Insurance_Assistant\n(Front-man Agent)|
+:Receive user inquiry;
+note right
+  **AAOSA Protocol:**
+  Single point of interaction
+  Routes to down-chain agents
+  Compiles final responses
+end note
+
+-[$DETERMINE_COLOR]->
+:Call down-chain agents in\n"Determine" mode;
+
+-[$DETERMINE_COLOR]->
+|#LightCoral|Quote_Generator_Agent|
+:Evaluate inquiry relevance;
+-[$RESPONSE_COLOR]->
+:Return: Relevant/Strength/Claim;
+
+-[$DETERMINE_COLOR]->
+|#LightGreen|Insurance_Information_Agent|
+:Evaluate inquiry relevance;
+-[$RESPONSE_COLOR]->
+:Return: Relevant/Strength/Claim;
+
+-[$RESPONSE_COLOR]->
+|#AntiqueWhite|Excess_And_Surplus_Insurance_Assistant|
+:Analyze down-chain responses;
+:Determine strongest claim;
+
+if (Quote request identified?) then (yes)
+  -[$FULFILL_COLOR]->
+  |#LightCoral|Quote_Generator_Agent|
+  :Call in "Fulfill" mode;
+  
+  if (All required fields available?) then (yes)
+    :business_type
+    coverage_type
+    coverage_limit
+    location;
+    
+    -[$TOOL_COLOR]->
+    |#LightBlue|mcp_quote_generator\n(Coded Tool)|
+    :Invoke MCP quote server;
+    :Parameters:
+    - business_type
+    - coverage_type
+    - coverage_limit
+    - location
+    - square_footage (optional)
+    - deductible (optional);
+    
+    :Generate comprehensive quote;
+    
+    -[$RESPONSE_COLOR]->
+    |#LightCoral|Quote_Generator_Agent|
+    :Format quote response with:
+    - Coverage limits
+    - Premiums
+    - Deductibles
+    - Terms & conditions;
+    
+    -[$RESPONSE_COLOR]->
+    :Return structured response;
+  else (no - missing fields)
+    -[$RESPONSE_COLOR]->
+    :Return requirements list;
+    
+    -[$FOLLOWUP_COLOR]->
+    |#AntiqueWhite|Excess_And_Surplus_Insurance_Assistant|
+    :Request missing information
+    from user (one at a time);
+    
+    -[$FOLLOWUP_COLOR]->
+    :Call Quote_Generator_Agent\nin "Follow up" mode;
+    -[$FOLLOWUP_COLOR]->
+    |#LightCoral|Quote_Generator_Agent|
+  endif
+
+else (information request)
+  -[$FULFILL_COLOR]->
+  |#LightGreen|Insurance_Information_Agent|
+  :Call in "Fulfill" mode;
+  
+  -[$TOOL_COLOR]->
+  |#PaleGreen|insurance_info_provider\n(Coded Tool)|
+  :Invoke semantic search with RAG;
+  :Parameters:
+  - query
+  - section (optional);
+  
+  :Retrieve relevant information
+  from knowledge base about:
+  - Programs
+  - Coverage types
+  - Business types
+  - Specialty lines;
+  
+  -[$RESPONSE_COLOR]->
+  |#LightGreen|Insurance_Information_Agent|
+  :Format information response;
+  -[$RESPONSE_COLOR]->
+  :Return structured response;
+  
+  -[$RESPONSE_COLOR]->
+  |#AntiqueWhite|Excess_And_Surplus_Insurance_Assistant|
+  
+  if (User needs a quote\nafter information?) then (yes)
+    -[$FULFILL_COLOR]->
+    :Route to Quote_Generator_Agent;
+    -[$FULFILL_COLOR]->
+    |#LightCoral|Quote_Generator_Agent|
+    :Process quote request;
+    -[$RESPONSE_COLOR]->
+    |#AntiqueWhite|Excess_And_Surplus_Insurance_Assistant|
+  else (no)
+  endif
+endif
+
+-[$RESPONSE_COLOR]->
+|#AntiqueWhite|Excess_And_Surplus_Insurance_Assistant|
+:Compile final response;
+-[$RESPONSE_COLOR]->
+:Present to user;
+
+-[$USER_COLOR]->
+|User|
+:Receive response;
+stop
+
+legend right
+  **AAOSA Modes:**
+  • <color:$DETERMINE_COLOR>**Determine**</color> - Check relevance and claim
+  • <color:$FOLLOWUP_COLOR>**Follow up**</color> - Continue conversation
+  • <color:$FULFILL_COLOR>**Fulfill**</color> - Execute the actual work
+  
+  **Interaction Types:**
+  • <color:$USER_COLOR>**User Interaction**</color>
+  • <color:$TOOL_COLOR>**Tool Invocation**</color>
+  • <color:$RESPONSE_COLOR>**Response/Return**</color>
+  
+  **Agent Hierarchy:**
+  Front-man → Intermediate Agents → Coded Tools
+endlegend
+
+@enduml
