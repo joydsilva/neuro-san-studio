@@ -3,7 +3,7 @@
         "model_name": "gpt-4o",
     },
    "instructions_prefix": """
-You are part of a nationwide_excess_and_surplus_insurance team of assistants.
+You are part of a nw_excess_and_surplus_insurance team of assistants.
 
 INSTRUCTIONS FOR MCP TOOL USAGE:
 1. When a user requests an insurance quote, you MUST capture the following required data from the user's request:
